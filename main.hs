@@ -2,9 +2,8 @@ module Main where
 
 import Network.Socket
 import System.IO
-import Data.List.Split
 import Control.Concurrent
-import Control.Monad.Fix
+import Control.Monad
 
 data User = User {
 		usr_id:: Int,
@@ -64,15 +63,13 @@ chat chatroom user = do
 	hSetBuffering hdl NoBuffering
 	thisChat <- dupChan chatroom
 
-	forkIO $ fix $ \loop -> do
+	forkIO $ forever $ do
 		line <- readChan thisChat
 		hPutStrLn hdl line
-		loop
 
-	fix $ \loop -> do
+	forever $ do
 		line <- fmap init (hGetLine hdl)
 		writeChan chatroom line
-		loop
 ----------------------------------
 
 ---USER FUNCTIONS-----------------
