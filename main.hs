@@ -4,6 +4,7 @@ import Network.Socket
 import System.IO
 import Data.List.Split
 import Control.Concurrent
+import Control.Monad.Fix
 
 data User = User {
 		usr_id:: Int,
@@ -35,7 +36,7 @@ manageConn sock userNum = do
 	close sock
 
 filterConn :: String -> User -> [String] -> IO ()
-filterConn "JOIN_CHATROOM" user info = joinChatroom user info
+filterConn "Join" user info = joinChatroom user info
 filterConn "LEAVE_CHATROOM" user _ = leaveChatroom user
 filterConn s _ _ = killConn s
 ----------------------------------
@@ -43,21 +44,37 @@ filterConn s _ _ = killConn s
 ---CHATROOM FUNCTIONS-------------
 joinChatroom user info = do
 	let num = show (usr_id user)
-	send (sock user) ("Welcome " ++ num )
+	send (sock user) ("Welcome " ++ num ++ "\n" )
 	print ("User["++num++"] has joined.")
 	chatroom <- initChatroom
-	manageConn (sock user) (usr_id user)
+	chat chatroom user	
 
 initChatroom :: IO (Chan String)
 initChatroom = newChan
 
 leaveChatroom _ = print "Leave"
-killConn error = do
-	 print error
+killConn error = print error
 
 getChatroomName :: [String] -> String
 getChatroomName _ = "Ch_room_1"
+
+chat :: Chan String -> User -> IO ()
+chat chatroom user = do
+	hdl <- socketToHandle (sock user) ReadWriteMode
+	hSetBuffering hdl NoBuffering
+	thisChat <- dupChan chatroom
+
+	forkIO $ fix $ \loop -> do
+		line <- readChan thisChat
+		hPutStrLn hdl line
+		loop
+
+	fix $ \loop -> do
+		line <- fmap init (hGetLine hdl)
+		writeChan chatroom line
+		loop
 ----------------------------------
+
 ---USER FUNCTIONS-----------------
 createUser :: Int -> String -> Socket -> User
 createUser usr_id name sock = User usr_id name sock
