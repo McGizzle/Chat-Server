@@ -74,7 +74,7 @@ getChannel chats name = do
 					    	   return chan
 					    else return $ fromJust result
 
-findCHR :: [(String, Chan Msg)] -> String -> Maybe (Chan Msg)
+findCHR :: [Chatroom] -> String -> Maybe (Chan Msg)
 findCHR [] _ = Nothing
 findCHR (x:xs) name  
   | name == (fst x) = Just (snd x)
