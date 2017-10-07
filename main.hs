@@ -7,7 +7,8 @@ import Control.Monad
 import Control.Monad (replicateM)
 import Data.Maybe
 
-type Chatroom = TVar [(String, Chan Msg)]
+type Chatroom = (String, Chan Msg)
+type Chatrooms = TVar [Chatroom]
 data User = User { name :: String, usr_id :: Int, hdl :: Handle }
  deriving Show
 
@@ -22,13 +23,13 @@ main = do
   chats <- atomically $ newTVar []
   connLoop sock chats 0
 
-connLoop :: Socket -> Chatroom -> Int -> IO ()
+connLoop :: Socket -> Chatrooms -> Int -> IO ()
 connLoop sock chats num = do
   conn <- accept sock
   forkIO $ manageConn (fst conn) chats num
   connLoop sock chats (num + 1)
 
-manageConn :: Socket -> Chatroom -> Int -> IO ()
+manageConn :: Socket -> Chatrooms -> Int -> IO ()
 manageConn sock chats num = do
   print ("User[" ++ show num ++ "] has joined the network.")
   hdl <- socketToHandle sock ReadWriteMode
@@ -38,20 +39,20 @@ manageConn sock chats num = do
   let usr = User "" num hdl
   let chName = head info
   chan <- getChannel chats chName
-  runChat chan usr
+  runChat (chName,chan) usr
 
 hGetLines :: Int -> Handle -> IO [String]
 hGetLines n hdl = replicateM n (hGetLine hdl)
  
-runChat :: Chan (String,Int) -> User -> IO ()
-runChat chatroom usr = do
+runChat :: Chatroom -> User -> IO ()
+runChat (name, chan) usr = do
   let sendMe msg = hPutStrLn (hdl usr) msg
   let num = (usr_id usr)
-  let sendMsg msg = writeChan chatroom (msg,num) 
-  print ("User[" ++ show num ++ "] has joined a chatroom.")
-  thisChat <- dupChan chatroom
+  let sendMsg msg = writeChan chan (msg,num) 
+  print ("User[" ++ show num ++ "] has joined ["++ name ++ "] chatroom.")
+  thisChat <- dupChan chan
   sendMsg ("---> ["++ show num ++"] has joined the chat.")   
-  sendMe ("Welcome to the chat.") 
+  sendMe ("Welcome to the '"++ name  ++ "' chat.") 
 
   forkIO $ forever $ do
     (line, msgNum) <- readChan thisChat
@@ -61,7 +62,7 @@ runChat chatroom usr = do
     line <- fmap init (hGetLine (hdl usr))
     sendMsg ("["++ show num  ++"]: " ++ line)
 
-getChannel :: Chatroom -> String -> IO (Chan Msg)
+getChannel :: Chatrooms -> String -> IO (Chan Msg)
 getChannel chats name = do
 			  chan <- newChan
 			  atomically $ do list <- readTVar chats
