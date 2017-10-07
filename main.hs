@@ -7,12 +7,11 @@ import Control.Monad
 import Control.Monad (replicateM)
 import Data.Maybe
 
+type Msg = (String, Int)
 type Chatroom = (String, Chan Msg)
-type Chatrooms = TVar [Chatroom]
+type ChatroomList = TVar [Chatroom]
 data User = User { name :: String, usr_id :: Int, hdl :: Handle }
  deriving Show
-
-type Msg = (String, Int)
 
 main :: IO ()
 main = do
@@ -23,13 +22,13 @@ main = do
   chats <- atomically $ newTVar []
   connLoop sock chats 0
 
-connLoop :: Socket -> Chatrooms -> Int -> IO ()
+connLoop :: Socket -> ChatroomList -> Int -> IO ()
 connLoop sock chats num = do
   conn <- accept sock
   forkIO $ manageConn (fst conn) chats num
   connLoop sock chats (num + 1)
 
-manageConn :: Socket -> Chatrooms -> Int -> IO ()
+manageConn :: Socket -> ChatroomList -> Int -> IO ()
 manageConn sock chats num = do
   print ("User[" ++ show num ++ "] has joined the network.")
   hdl <- socketToHandle sock ReadWriteMode
@@ -49,8 +48,10 @@ runChat (name, chan) usr = do
   let sendMe msg = hPutStrLn (hdl usr) msg
   let num = (usr_id usr)
   let sendMsg msg = writeChan chan (msg,num) 
-  print ("User[" ++ show num ++ "] has joined ["++ name ++ "] chatroom.")
+  
   thisChat <- dupChan chan
+  
+  print ("User[" ++ show num ++ "] has joined ["++ name ++ "] chatroom.")
   sendMsg ("---> ["++ show num ++"] has joined the chat.")   
   sendMe ("Welcome to the '"++ name  ++ "' chat.") 
 
@@ -62,17 +63,18 @@ runChat (name, chan) usr = do
     line <- fmap init (hGetLine (hdl usr))
     sendMsg ("["++ show num  ++"]: " ++ line)
 
-getChannel :: Chatrooms -> String -> IO (Chan Msg)
+getChannel :: ChatroomList -> String -> IO (Chan Msg)
 getChannel chats name = do
-			  chan <- newChan
-			  atomically $ do list <- readTVar chats
-					  let result = findCHR list name
-				          if isNothing result
-					    then do 
-						   let newList = (name, chan) : list
-						   writeTVar chats newList
-					    	   return chan
-					    else return $ fromJust result
+  chan <- newChan
+  atomically $ do 
+    list <- readTVar chats
+    let result = findCHR list name
+    if isNothing result
+      then do 
+        let newList = (name, chan) : list
+        writeTVar chats newList
+        return chan
+    else return $ fromJust result
 
 findCHR :: [Chatroom] -> String -> Maybe (Chan Msg)
 findCHR [] _ = Nothing
