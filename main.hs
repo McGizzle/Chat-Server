@@ -38,13 +38,13 @@ manageConn sock chats num = do
   let usr = User "" num hdl
   let chName = head info
   chan <- getChan chats chName
-  runChat chName chan usr
+  runChat (chName,chan) usr
 
 hGetLines :: Int -> Handle -> IO [String]
 hGetLines n hdl = replicateM n (hGetLine hdl)
  
-runChat :: String -> Chan Msg -> User -> IO ()
-runChat name chan usr = do
+runChat :: (String, Chan Msg) -> User -> IO ()
+runChat (name,chan) usr = do
   let sendMe msg = hPutStrLn (hdl usr) msg
   let num = (usr_id usr)
   let sendMsg msg = writeChan chan (msg,num) 
