@@ -9,7 +9,6 @@ import Data.Maybe
 type Chatroom = TVar [(String, Chan String)]
 data User = User { name :: String, usr_id :: Int, hdl :: Handle }
 
-
 main :: IO ()
 main = do
   sock <- socket AF_INET Stream 0
@@ -26,14 +25,16 @@ connLoop sock chats num = do
   conn <- accept sock
   hdl <- socketToHandle (fst conn) ReadWriteMode
   hSetBuffering hdl NoBuffering
+  dInfo <- fmap init (hGetContents hdl)
+  info <- return $ words dInfo	
   let usr = User "" num hdl
   chName <- fmap init (hGetLine hdl)
   chan <- getChannel chats chName
   forkIO $ runChat chan usr
-  connLoop sock chats
+  connLoop sock chats (num + 1)
  
 runChat :: Chan String -> User -> IO ()
-runChat chatroom hdl = do
+runChat chatroom usr = do
   thisChat <- dupChan chatroom
   
   forkIO $ forever $ do
