@@ -3,14 +3,14 @@ import Network.Socket
 import System.IO
 import Control.Concurrent
 import Control.Concurrent.STM
-import Control.Monad
-import Control.Monad (replicateM)
 import Data.Maybe
 import Data.Map as M
+import Control.Monad
+import Control.Monad (replicateM)
+import Control.Break
 
 type Msg = (String, Int)
-type Chatroom = Map String (Chan Msg)
-type ChatroomList = TVar Chatroom
+type Chatrooms = TVar (Map String (Chan Msg))
 data User = User { name :: String, usr_id :: Int, hdl :: Handle }
 
 main :: IO ()
@@ -22,13 +22,13 @@ main = do
   chats <- atomically $ newTVar M.empty
   connLoop sock chats 0
 
-connLoop :: Socket -> ChatroomList -> Int -> IO ()
+connLoop :: Socket -> Chatrooms -> Int -> IO ()
 connLoop sock chats num = do
   conn <- accept sock
   forkIO $ manageConn (fst conn) chats num
   connLoop sock chats (num + 1)
 
-manageConn :: Socket -> ChatroomList -> Int -> IO ()
+manageConn :: Socket -> Chatrooms -> Int -> IO ()
 manageConn sock chats num = do
   print ("User[" ++ show num ++ "] has joined the network.")
   hdl <- socketToHandle sock ReadWriteMode
@@ -39,6 +39,7 @@ manageConn sock chats num = do
   let chName = head info
   chan <- getChan chats chName
   runChat (chName,chan) usr
+  close sock
 
 hGetLines :: Int -> Handle -> IO [String]
 hGetLines n hdl = replicateM n (hGetLine hdl)
@@ -55,15 +56,23 @@ runChat (name,chan) usr = do
   sendMsg ("---> ["++ show num ++"] has joined the chat.")   
   sendMe ("Welcome to the '"++ name  ++ "' chat.") 
 
-  forkIO $ forever $ do
+  reader <- forkIO $ forever $ do
     (line, msgNum) <- readChan thisChat
     when (msgNum /= num) $ sendMe (line)
  
   forever $ do
     line <- fmap init (hGetLine (hdl usr))
+-- TODO: Exit loop ::  when (leaveChat line) $
     sendMsg ("["++ show num  ++"]: " ++ line)
 
-getChan :: ChatroomList -> String -> IO (Chan Msg)
+  killThread reader
+  sendMsg ("<--- ["++ show num  ++"] has left the chat.")
+
+leaveChat :: String -> Bool
+leaveChat ":leave" = True
+leaveChat _ = False
+
+getChan :: Chatrooms -> String -> IO (Chan Msg)
 getChan chats name = do
   chan <- newChan
   atomically $ do 
