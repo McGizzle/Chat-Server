@@ -6,19 +6,22 @@ import Control.Concurrent.STM
 import Data.Maybe
 import Data.Map as M
 import Control.Monad
-import Control.Monad (replicateM)
-import Control.Break
+import Control.Monad.Trans.Maybe (runMaybeT) 
+import Control.Monad.Trans.Class (lift)
 
 type Msg = (String, Int)
 type Chatrooms = TVar (Map String (Chan Msg))
-data User = User { name :: String, usr_id :: Int, hdl :: Handle }
+data User = User { name :: String, usrId :: Int, hdl :: Handle }
+
+port :: PortNumber
+port = 5555
 
 main :: IO ()
-main = do
+main = do 
   sock <- socket AF_INET Stream 0
   setSocketOption sock ReuseAddr 1
-  bind sock $ SockAddrInet 6969 iNADDR_ANY
-  listen sock 2
+  bind sock $ SockAddrInet port iNADDR_ANY
+  listen sock 5
   chats <- atomically $ newTVar M.empty
   connLoop sock chats 0
 
@@ -34,20 +37,19 @@ manageConn sock chats num = do
   hdl <- socketToHandle sock ReadWriteMode
   hSetBuffering hdl NoBuffering
   dInfo <- fmap init (hGetLine hdl)
-  info <- return $ words dInfo
+  let chName = head $ words dInfo
   let usr = User "" num hdl
-  let chName = head info
   chan <- getChan chats chName
   runChat (chName,chan) usr
-  close sock
+  hClose hdl
 
 hGetLines :: Int -> Handle -> IO [String]
 hGetLines n hdl = replicateM n (hGetLine hdl)
  
 runChat :: (String, Chan Msg) -> User -> IO ()
 runChat (name,chan) usr = do
-  let sendMe msg = hPutStrLn (hdl usr) msg
-  let num = (usr_id usr)
+  let sendMe = hPutStrLn (hdl usr)
+  let num = usrId usr
   let sendMsg msg = writeChan chan (msg,num) 
   
   thisChat <- dupChan chan
@@ -58,15 +60,16 @@ runChat (name,chan) usr = do
 
   reader <- forkIO $ forever $ do
     (line, msgNum) <- readChan thisChat
-    when (msgNum /= num) $ sendMe (line)
+    when (msgNum /= num) $ sendMe line
  
-  forever $ do
-    line <- fmap init (hGetLine (hdl usr))
--- TODO: Exit loop ::  when (leaveChat line) $
-    sendMsg ("["++ show num  ++"]: " ++ line)
+  runMaybeT $ forever $ do
+    line <- lift $ fmap init (hGetLine (hdl usr))
+    when (leaveChat line) $ mzero
+    lift $ sendMsg ("["++ show num  ++"]: " ++ line)
 
   killThread reader
   sendMsg ("<--- ["++ show num  ++"] has left the chat.")
+  print ("User ["++ show num  ++"] has left the '"++ name  ++ "' chat.")
 
 leaveChat :: String -> Bool
 leaveChat ":leave" = True
