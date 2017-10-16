@@ -1,10 +1,10 @@
 
 ==================== FINAL INTERFACE ====================
-2017-10-16 16:40:28.58188 UTC
+2017-10-16 17:40:59.422754 UTC
 
 interface main@main:Main 8002
-  interface hash: 3735c3c5a6c5bebe7f63819475a1295c
-  ABI hash: 3245244c67be0f084594d86e5c8c9cf9
+  interface hash: f3012a0da56450824e0ee1d93dadd77a
+  ABI hash: 2cdf3290b163753433b8a71ad3138351
   export-list hash: c6956e7c5def00cf3fd2f318de1a4fd9
   orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
   flag hash: 75de5e6bb661f6aa9e53de7e958ba42e
@@ -419,12 +419,11 @@ ea2a71ee6e49855afcf101ef433e44ad
     GHC.Prim.Int#
     -> Data.Map.Base.Map GHC.Types.Int a -> GHC.Base.Maybe a
   {- Arity: 2, HasNoCafRefs, Strictness: <L,U><S,1*U>, Inline: [0] -}
-c8630e0471a225e94d9278f7a07f4338
+1bc3c543e89b356d5d70b36e8577d718
   $wremoveClient ::
-    GHC.Base.String
-    -> GHC.Prim.TVar#
-         GHC.Prim.RealWorld
-         (Control.Concurrent.STM.TChan.TVarList Main.Message)
+    GHC.Prim.TVar#
+      GHC.Prim.RealWorld
+      (Control.Concurrent.STM.TChan.TVarList Main.Message)
     -> GHC.Prim.TVar#
          GHC.Prim.RealWorld
          (Control.Concurrent.STM.TChan.TVarList Main.Message)
@@ -434,8 +433,113 @@ c8630e0471a225e94d9278f7a07f4338
          GHC.Prim.RealWorld (Data.Map.Base.Map GHC.Types.Int Main.Chatroom)
     -> GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
-  {- Arity: 7, Strictness: <L,U><L,A><S,U><L,U(U)><L,U><S,U><S,U>,
-     Inline: [0] -}
+  {- Arity: 6, Strictness: <L,A><S,U><L,U(U)><L,U><S,U><S,U>,
+     Inline: [0],
+     Unfolding: (\ (ww :: GHC.Prim.TVar#
+                            GHC.Prim.RealWorld
+                            (Control.Concurrent.STM.TChan.TVarList Main.Message))
+                   (ww1 :: GHC.Prim.TVar#
+                             GHC.Prim.RealWorld
+                             (Control.Concurrent.STM.TChan.TVarList Main.Message))
+                   (ww2 :: GHC.Types.Int)
+                   (ww3 :: GHC.Prim.Int#)
+                   (ww4 :: GHC.Prim.TVar#
+                             GHC.Prim.RealWorld (Data.Map.Base.Map GHC.Types.Int Main.Chatroom))
+                   (w :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 GHC.Prim.atomically#
+                   @ ()
+                   (\ (s :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                    case GHC.Prim.readTVar#
+                           @ GHC.Prim.RealWorld
+                           @ (Data.Map.Base.Map GHC.Types.Int Main.Chatroom)
+                           ww4
+                           s of ds1 { (#,#) ipv ipv1 ->
+                    let {
+                      $j :: GHC.Prim.State# GHC.Prim.RealWorld
+                            -> GHC.Base.Maybe Main.Chatroom
+                            -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
+                        {- Arity: 2, Strictness: <S,U><S,1*U> -}
+                      = \ (ipv2 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot]
+                          (ipv3 :: GHC.Base.Maybe Main.Chatroom)[OneShot] ->
+                        let {
+                          $w$j :: GHC.Prim.State# GHC.Prim.RealWorld
+                                  -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
+                            {- Arity: 1, Strictness: <S,U>, Inline: [0] -}
+                          = \ (w1 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                            case GHC.Prim.readTVar#
+                                   @ GHC.Prim.RealWorld
+                                   @ (Control.Concurrent.STM.TChan.TVarList Main.Message)
+                                   ww1
+                                   w1 of ds2 { (#,#) ipv4 ipv5 ->
+                            case GHC.Prim.newTVar#
+                                   @ (Control.Concurrent.STM.TChan.TList Main.Message)
+                                   @ GHC.Prim.RealWorld
+                                   (Control.Concurrent.STM.TChan.TNil @ Main.Message)
+                                   ipv4 of ds3 { (#,#) ipv6 ipv7 ->
+                            case ipv5 of wild1 { GHC.Conc.Sync.TVar tvar# ->
+                            case GHC.Prim.writeTVar#
+                                   @ GHC.Prim.RealWorld
+                                   @ (Control.Concurrent.STM.TChan.TList Main.Message)
+                                   tvar#
+                                   (Control.Concurrent.STM.TChan.TCons
+                                      @ Main.Message
+                                      (Main.Response
+                                         (GHC.CString.unpackAppendCString#
+                                            "LEFT_CHATROOM:"#
+                                            (case GHC.Show.$wshowSignedInt
+                                                    0#
+                                                    ww3
+                                                    (GHC.Types.[]
+                                                       @ GHC.Types.Char) of ww5 { (#,#) ww6 ww7 ->
+                                             GHC.Base.++
+                                               @ GHC.Types.Char
+                                               (GHC.Types.: @ GHC.Types.Char ww6 ww7)
+                                               (GHC.CString.unpackAppendCString#
+                                                  "\n\
+                                                  \JOIN_ID:"#
+                                                  (case ww2 of ww8 { GHC.Types.I# ww9 ->
+                                                   case GHC.Show.$wshowSignedInt
+                                                          0#
+                                                          ww9
+                                                          (GHC.Types.[]
+                                                             @ GHC.Types.Char) of ww10 { (#,#) ww11 ww12 ->
+                                                   GHC.Types.: @ GHC.Types.Char ww11 ww12 } })) })))
+                                      ipv7)
+                                   ipv6 of s2# { DEFAULT ->
+                            case GHC.Prim.writeTVar#
+                                   @ GHC.Prim.RealWorld
+                                   @ (Control.Concurrent.STM.TChan.TVarList Main.Message)
+                                   ww1
+                                   (GHC.Conc.Sync.TVar
+                                      @ (Control.Concurrent.STM.TChan.TList Main.Message)
+                                      ipv7)
+                                   s2# of s2#1 { DEFAULT ->
+                            (# s2#1, GHC.Tuple.() #) } } } } }
+                        } in
+                        case ipv3 of wild {
+                          GHC.Base.Nothing -> $w$j ipv2
+                          GHC.Base.Just room
+                          -> case room of wild1 { Main.Chatroom ds ds2 ds3 ->
+                             case ds3 of wild2 { GHC.Conc.Sync.TVar tvar# ->
+                             case GHC.Prim.readTVar#
+                                    @ GHC.Prim.RealWorld
+                                    @ (Data.Map.Base.Map GHC.Types.Int Main.Client)
+                                    tvar#
+                                    ipv2 of ds4 { (#,#) ipv4 ipv5 ->
+                             case ww2 of ww5 { GHC.Types.I# ww6 ->
+                             case Main.$w$sgo10 @ Main.Client ww6 ipv5 of vx { DEFAULT ->
+                             case GHC.Prim.writeTVar#
+                                    @ GHC.Prim.RealWorld
+                                    @ (Data.Map.Base.Map GHC.Types.Int Main.Client)
+                                    tvar#
+                                    vx
+                                    ipv4 of s2# { DEFAULT ->
+                             $w$j s2# } } } } } } }
+                    } in
+                    case Main.$wpoly_go10 @ Main.Chatroom ww3 ipv1 of wild {
+                      GHC.Base.Nothing -> $j ipv (GHC.Base.Nothing @ Main.Chatroom)
+                      GHC.Base.Just c -> $j ipv wild } })
+                   w) -}
 014427ac54a263ddc482b4e652dcacca
   $wsendMessage ::
     GHC.Prim.TVar#
@@ -976,11 +1080,11 @@ b7b4130882e7fba790b6de54c9f369e0
                       (Control.Concurrent.STM.TChan.TChan @ Main.Message ipv3 ipv5)
                       hdl
                       num #) } } }) -}
-341172fdd120ddba2dd438107ba1b7d2
+90d38dc88136833581e14b3758181946
   removeClient ::
     Main.Client -> GHC.Types.Int -> Main.Chatrooms -> GHC.Types.IO ()
   {- Arity: 4,
-     Strictness: <S(LS(LS)LL),U(U,1*U(A,U),A,U(U))><S,U(U)><S(S),1*U(U)><S,U>,
+     Strictness: <S(LS(LS)LL),U(A,1*U(A,U),A,U(U))><S,U(U)><S(S),1*U(U)><S,U>,
      Unfolding: InlineRule (0, True, True)
                 Main.removeClient1
                   `cast`
@@ -988,7 +1092,7 @@ b7b4130882e7fba790b6de54c9f369e0
                  ->_R <GHC.Types.Int>_R
                  ->_R <Main.Chatrooms>_R
                  ->_R Sym (GHC.Types.N:IO[0] <()>_R)) -}
-d8cd8cdf2f31f4d525fe91171dc1291e
+3a3d7b23a7c0a961ad96cafb773884b9
   removeClient1 ::
     Main.Client
     -> GHC.Types.Int
@@ -996,7 +1100,7 @@ d8cd8cdf2f31f4d525fe91171dc1291e
     -> GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
   {- Arity: 4,
-     Strictness: <S(LS(LS)LL),U(U,1*U(A,U),A,U(U))><S,U(U)><S(S),1*U(U)><S,U>,
+     Strictness: <S(LS(LS)LL),U(A,1*U(A,U),A,U(U))><S,U(U)><S(S),1*U(U)><S,U>,
      Inline: INLINE[0],
      Unfolding: InlineRule (4, True, False)
                 (\ (w :: Main.Client)
@@ -1007,7 +1111,7 @@ d8cd8cdf2f31f4d525fe91171dc1291e
                  case ww2 of ww5 { Control.Concurrent.STM.TChan.TChan ww6 ww7 ->
                  case w1 of ww8 { GHC.Types.I# ww9 ->
                  case w2 of ww10 { GHC.Conc.Sync.TVar ww11 ->
-                 Main.$wremoveClient ww1 ww6 ww7 ww4 ww9 ww11 w3 } } } }) -}
+                 Main.$wremoveClient ww6 ww7 ww4 ww9 ww11 w3 } } } }) -}
 c117a17488c7000d7b856ab0b7774005
   roomName :: Main.Chatroom -> GHC.Base.String
   RecSel Left Main.Chatroom
