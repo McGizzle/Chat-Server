@@ -1,10 +1,10 @@
 
 ==================== FINAL INTERFACE ====================
-2017-10-16 17:59:08.305042 UTC
+2017-10-16 20:37:14.749491 UTC
 
 interface main@main:Main 8002
-  interface hash: f3012a0da56450824e0ee1d93dadd77a
-  ABI hash: 2cdf3290b163753433b8a71ad3138351
+  interface hash: 3fd883b4152456d48de4c11523241f70
+  ABI hash: 8b9238aea83269e5add730060667e1fc
   export-list hash: c6956e7c5def00cf3fd2f318de1a4fd9
   orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
   flag hash: 75de5e6bb661f6aa9e53de7e958ba42e
@@ -864,12 +864,12 @@ d6744412d63fd536f0761511aea831ac
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, GHC.Types.Bool #)
   {- Arity: 4,
      Strictness: <L,U(U)><L,U(U,U(U,U),U,U(U))><S,1*U><S,U> -}
-62fe40fc5ac3dbe0e97f77788e1d0d2e
+fcd9ed5895702f59e173a6106cf623ab
   main :: GHC.Types.IO ()
   {- Arity: 1, Strictness: <S,U>,
      Unfolding: InlineRule (0, True, True)
                 Main.main1 `cast` (Sym (GHC.Types.N:IO[0] <()>_R)) -}
-8b1361f598eef5a233082d447163b504
+50b5f856914444a6f34bf54a218bcb37
   main1 ::
     GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
@@ -919,7 +919,7 @@ d6744412d63fd536f0761511aea831ac
 90d19c415810247fe498adf7f182466a
   main10 :: GHC.Types.Int
   {- HasNoCafRefs, Unfolding: (GHC.Types.I# 1#) -}
-67186ee3f5a0dce595d369d7769bb6c9
+43af7c33a5c92b0229c6905a5444ba21
   main11 ::
     GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
@@ -927,13 +927,13 @@ d6744412d63fd536f0761511aea831ac
      Unfolding: (GHC.TopHandler.runMainIO1
                    @ ()
                    Main.main1 `cast` (Sym (GHC.Types.N:IO[0] <()>_R))) -}
-55bb8379d6bc3ac996d35677baeb9a15
+797ccb41aa5dd14be3ff98e4f7e6bb25
   main2 :: [GHC.Types.Char]
   {- Unfolding: (GHC.Types.:
                    @ GHC.Types.Char
                    GHC.Show.shows6
                    Main.main3) -}
-c95717f408e41aa77d988fa9beff5428
+3617a8e1d7c16c5e4945e416e30b28d2
   main3 :: GHC.Base.String
   {- Unfolding: (GHC.Show.showLitString Main.main5 Main.main4) -}
 f2bbeedb1edfa904939c20aabd91e10c
@@ -943,9 +943,10 @@ f2bbeedb1edfa904939c20aabd91e10c
                    @ GHC.Types.Char
                    GHC.Show.shows6
                    (GHC.Types.[] @ GHC.Types.Char)) -}
-98f04027b9c69547f5ec43384c046b9e
+515ff628ca88b1450167f0c84493ca05
   main5 :: [GHC.Types.Char]
-  {- Unfolding: (GHC.CString.unpackCString# "Server started"#) -}
+  {- Unfolding: (GHC.CString.unpackCString#
+                   "Server started... Listening on port 5555"#) -}
 13f7546ba019cd2d22c05f170cdd2698
   main6 ::
     GHC.Prim.State# GHC.Prim.RealWorld
