@@ -22,6 +22,10 @@ library
                      , stm
                      , transformers
                      , mtl
+                     , either
+                     , split
+                     , hashable
+                     , async
   default-language:    Haskell2010
 
 executable Chat-Server-exe
@@ -34,6 +38,10 @@ executable Chat-Server-exe
                      , stm
                      , transformers
                      , mtl
+                     , either
+                     , split
+                     , hashable
+                     , async
                      , Chat-Server
   default-language:    Haskell2010
 
