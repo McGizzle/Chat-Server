@@ -66,12 +66,11 @@ handleMessage chatrooms client message = do
         [["CHAT:",roomRef],["CLIENT_NAME:",name],["MESSAGE:",msg]]                                 -> do
           broadcastMessage (Broadcast roomRef (clientName client) msg) client (read roomRef :: Int) chatrooms       
           return True
-        [["JOIN_CHATROOM:",roomName],["CLIENT_IP:","0"],["PORT:","O"],["CLIENT_NAME:",clientName]] -> do
+        [["JOIN_CHATROOM:",roomName],["CLIENT_IP:","0"],["PORT:","O"],["CLIENT_NAME:",name]] -> do
           addClient client roomName chatrooms
-          atomically $ do sendMessage client $ Response ("JOINED_CHATROOM:")
-          print ("client["++ clientName ++"] added to room: " ++ roomName)
+          print ("client["++ name ++"] added to room: " ++ roomName)
           return True
-        [["LEAVE_CHATROOM",roomRef],["JOIN_ID",clientNum],["CLIENT_NAME",name]]                    -> do
+        [["LEAVE_CHATROOM",roomRef],["JOIN_ID",id],["CLIENT_NAME",name]]                    -> do
           removeClient client (read roomRef :: Int) chatrooms
           broadcastMessage (Broadcast roomRef (clientName client) "Has left the chatroom.") client (read roomRef :: Int) chatrooms
           print ("client["++ clientName client ++"] has left chatroom: " ++ roomRef)
@@ -83,6 +82,8 @@ handleMessage chatrooms client message = do
           return True
     where
      display x = do hPutStrLn (clientHdl client) x; return True
+     name = (clientName client)
+     id = (clientID client)
 
 removeClient :: Client -> Int -> Chatrooms -> IO ()
 removeClient client roomRef chatrooms = atomically $ do
