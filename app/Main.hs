@@ -10,7 +10,7 @@ import Data.Char
 import Data.Hashable
 import Data.List.Split
 
-data Message = Command [[String]] | Error String | Broadcast String | Response String
+data Message = Command [[String]] | Error String String | Broadcast String String String | Response String
 
 data Client = Client { clientName :: String, clientChan :: TChan Message, clientHdl :: Handle, clientID :: Int }
 data Chatroom = Chatroom { roomName :: String, roomRef:: Int, clients :: TVar (Map Int Client) }
@@ -47,7 +47,7 @@ broadcastMessage :: Message -> Client -> Int -> Chatrooms -> IO ()
 broadcastMessage msg client roomRef chatrooms = atomically $ do
   c <- fetchChatroom roomRef chatrooms
   case c of
-    Nothing -> sendMessage client (Error "This chat does not exist")
+    Nothing -> sendMessage client $ Error "200" "This chatroom does not exist"
     Just room -> do
       roomMap <- readTVar (clients room)
       mapM_ (\c -> sendMessage c msg) (Map.elems roomMap)
@@ -58,26 +58,31 @@ sendMessage client msg = writeTChan (clientChan client) msg
 handleMessage :: Chatrooms -> Client -> Message -> IO Bool
 handleMessage chatrooms client message = do
   case message of
-    Response msg -> do
-      hPutStrLn (clientHdl client) msg
-      return True
-    Broadcast msg -> do
-      hPutStrLn (clientHdl client) msg
-      return True
-    Error msg -> do
-      hPutStrLn (clientHdl client) msg
-      return True
-    Command msg ->
+    Response msg               -> display msg
+    Broadcast name roomRef msg -> display ("CHAT: " ++ roomRef ++ "\nCLIENT_NAME: " ++ name  ++ "\nMESSAGE: " ++ msg)
+    Error code msg             -> display ("ERROR_CODE:" ++ code ++ "\nERROR_DESCRIPTION:" ++ msg)
+    Command msg                ->
       case msg of
-        [["chat",msg],["roomref",roomRef]] -> do
-          broadcastMessage (Broadcast msg) client (read roomRef :: Int) chatrooms       
+        [["CHAT:",roomRef],["CLIENT_NAME:",name],["MESSAGE:",msg]]                                 -> do
+          broadcastMessage (Broadcast roomRef (clientName client) msg) client (read roomRef :: Int) chatrooms       
           return True
-        [["leave",roomRef],["id",clientNum]] -> do
+        [["JOIN_CHATROOM:",roomName],["CLIENT_IP:","0"],["PORT:","O"],["CLIENT_NAME:",clientName]] -> do
+          addClient client roomName chatrooms
+          atomically $ do sendMessage client $ Response ("JOINED_CHATROOM:")
+          print ("client["++ clientName ++"] added to room: " ++ roomName)
+          return True
+        [["LEAVE_CHATROOM",roomRef],["JOIN_ID",clientNum],["CLIENT_NAME",name]]                    -> do
           removeClient client (read roomRef :: Int) chatrooms
+          broadcastMessage (Broadcast roomRef (clientName client) "Has left the chatroom.") client (read roomRef :: Int) chatrooms
+          print ("client["++ clientName client ++"] has left chatroom: " ++ roomRef)
           return True
-        _                                  -> atomically $ do
-          sendMessage client (Error "Error pal.")
+        [["DISCONNECT","0"],["PORT","0"],["CLIENT_NAME",name]]                                     -> do
+          return False
+        _                                                                                          -> atomically $ do
+          sendMessage client $ Error "100" "Unknown command"
           return True
+    where
+     display x = do hPutStrLn (clientHdl client) x; return True
 
 removeClient :: Client -> Int -> Chatrooms -> IO ()
 removeClient client roomRef chatrooms = atomically $ do
@@ -86,7 +91,7 @@ removeClient client roomRef chatrooms = atomically $ do
     Nothing -> return ()
     Just room -> do
       modifyTVar' (clients room) $ Map.delete (clientID client)
-  sendMessage client $ Response ("Left chatroom")
+  sendMessage client $ Response ("LEFT_CHATROOM:" ++ show roomRef  ++ "\nJOIN_ID:" ++ (show $ clientID client))
 
 addClient :: Client -> String -> Chatrooms -> IO ()
 addClient client chatName chatrooms = atomically $ do
@@ -101,7 +106,7 @@ addClient client chatName chatrooms = atomically $ do
       roomMap <- readTVar (clients room)
       let newRoom = Map.insert (clientID client) client roomMap
       writeTVar (clients room) newRoom
-  sendMessage client $ Response ("JoinID: " ++ show (hash chatName))
+  sendMessage client $ Response ("JOINED_CHATROOM:" ++ chatName ++ "SERVER_IP:\nPORT:\nROOM_REF:"++ (show $ hash chatName) ++ "JOIN_ID:" ++ (show $ clientID client))
 
 runClient :: Chatrooms -> Client -> IO ()
 runClient chatrooms client = do
@@ -111,6 +116,7 @@ runClient chatrooms client = do
    sender = forever $ do
      msg <- hGetLines (clientHdl client) ""
      atomically $ do sendMessage client (Command msg)
+
    receiver = join $ atomically $ do
      msg <- readTChan (clientChan client)
      return $ do
@@ -124,13 +130,13 @@ buildClient chatrooms num hdl = do
    loop = do
      msg <- hGetLines hdl ""
      case msg of
-       [["join",roomName],["name",clientName]] -> do
+       [["JOIN_CHATROOM",roomName],["CLIENT_IP","0"],["PORT","O"],["CLIENT_NAME",clientName]] -> do
          client <- newClient num clientName hdl
          addClient client roomName chatrooms
          print ("New client["++ clientName ++"]["++ show num ++"] added to room: " ++ roomName)
          forkIO $ runClient chatrooms client
          return ()
-       _                    -> print "ERROR" >> loop
+       _                    -> loop
 
 getClients :: Chatrooms -> Socket -> Int -> IO ()
 getClients chatrooms sock num = do
