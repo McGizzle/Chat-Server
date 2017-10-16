@@ -92,6 +92,7 @@ removeClient client roomRef chatrooms = atomically $ do
     Just room -> do
       modifyTVar' (clients room) $ Map.delete (clientID client)
   sendMessage client $ Response ("LEFT_CHATROOM:" ++ show roomRef  ++ "\nJOIN_ID:" ++ (show $ clientID client))
+  sendMessage client $ Broadcast (show roomRef) (clientName client) "has left the chat."
 
 addClient :: Client -> String -> Chatrooms -> IO ()
 addClient client chatName chatrooms = atomically $ do
@@ -107,6 +108,7 @@ addClient client chatName chatrooms = atomically $ do
       let newRoom = Map.insert (clientID client) client roomMap
       writeTVar (clients room) newRoom
   sendMessage client $ Response ("JOINED_CHATROOM:" ++ chatName ++ "SERVER_IP:\nPORT:\nROOM_REF:"++ (show $ hash chatName) ++ "JOIN_ID:" ++ (show $ clientID client))
+  sendMessage client $ Broadcast (show $ hash chatName) (clientName client) "has joined the chat."  
 
 runClient :: Chatrooms -> Client -> IO ()
 runClient chatrooms client = do
