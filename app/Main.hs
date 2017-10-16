@@ -66,7 +66,7 @@ handleMessage chatrooms client message = do
         [["CHAT:",roomRef],["JOIN_ID:",id],["CLIENT_NAME:",name],["MESSAGE:",msg]]                                 -> do
           broadcastMessage (Broadcast roomRef (clientName client) msg) client (read roomRef :: Int) chatrooms       
           return True
-        [["JOIN_CHATROOM:",roomName],["CLIENT_IP:","0"],["PORT:","O"],["CLIENT_NAME:",name]] -> do
+        [["JOIN_CHATROOM:",roomName],["CLIENT_IP:","0"],["PORT:","0"],["CLIENT_NAME:",name]] -> do
           addClient client roomName chatrooms
           broadcastMessage (Broadcast (show $ hash roomName) (clientName client) "has joined the chat." ) client (hash roomName) chatrooms  
           print ("client["++ name ++"] added to room: " ++ roomName)
@@ -132,7 +132,7 @@ buildClient chatrooms num hdl = do
    loop = do
      msg <- hGetLines hdl ""
      case msg of
-       [["JOIN_CHATROOM:",roomName],["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",clientName]] -> do
+       [["JOIN_CHATROOM:",roomName],["CLIENT_IP:","0"],["PORT:","0"],["CLIENT_NAME:",clientName]] -> do
          client <- newClient num clientName hdl
          addClient client roomName chatrooms
          broadcastMessage (Broadcast (show $ hash roomName) clientName "has joined the chat." ) client (hash roomName) chatrooms  
