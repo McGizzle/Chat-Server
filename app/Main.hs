@@ -54,36 +54,43 @@ handleMessage chatrooms client message = do
     Response msg               -> display $ msg ++ "\n"
     Broadcast roomRef name msg -> display ("CHAT:" ++ roomRef ++ "\nCLIENT_NAME:" ++ name  ++ "\nMESSAGE:" ++ msg)
     Error code msg             -> display ("ERROR_CODE:" ++ code ++ "\nERROR_DESCRIPTION:" ++ msg)
-    Command msg                ->
-      case msg of
-        [["CHAT:",roomRef],["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msg)]       -> do
-          broadcastMessage (Broadcast roomRef (clientName client) (unwords msg)) client (read roomRef :: Int) chatrooms       
-          return True
-        [["JOIN_CHATROOM:",roomName],["CLIENT_IP:","0"],["PORT:","0"],["CLIENT_NAME:",name]] -> do
-          addClient client roomName chatrooms
-          broadcastMessage (Broadcast (show $ hash roomName) (clientName client) "has joined the chat." ) client (hash roomName) chatrooms  
-          print ("client["++ name ++"] added to room: " ++ roomName)
-          return True
-        [["LEAVE_CHATROOM:",roomRef],["JOIN_ID:",id],["CLIENT_NAME:",name]]                  -> do
-          unless (noMatch client id) $ do
+    Command msg                -> 
+      case msg of 
+        [["CHAT:",roomRef],["JOIN_ID:",x],["CLIENT_NAME:",y],("MESSAGE:":msg)]       ->
+          if (x /= id || y /= name) then error
+          else do
+            broadcastMessage (Broadcast roomRef (clientName client) (unwords msg)) client (read roomRef :: Int) chatrooms       
+            return True
+        [["JOIN_CHATROOM:",roomName],["CLIENT_IP:","0"],["PORT:","0"],["CLIENT_NAME:",y]] -> do
+          if ( y /= name) then error
+          else do
+            addClient client roomName chatrooms
+            broadcastMessage (Broadcast (show $ hash roomName) (clientName client) "has joined the chat." ) client (hash roomName) chatrooms  
+            print ("client["++ name ++"] added to room: " ++ roomName)
+            return True
+        [["LEAVE_CHATROOM:",roomRef],["JOIN_ID:",x],["CLIENT_NAME:",y]]                  -> do
+          if (x /= id || y /= name) then error
+          else do
             left <- removeClient client (read roomRef :: Int) chatrooms
             when left $ do
               broadcastMessage (Broadcast roomRef (clientName client) "Has left the chatroom.") client (read roomRef :: Int) chatrooms
               print ("client["++ name ++"] has left chatroom: " ++ roomRef)
-          return True
-        [["DISCONNECT:","0"],["PORT:","0"],["CLIENT_NAME:",name]]                            -> do
-          print (name ++ " disconnected.")
-          return False
+            return True
+        [["DISCONNECT:","0"],["PORT:","0"],["CLIENT_NAME:",y]]                            -> do
+          if ( y /= name) then error
+          else do
+            print (name ++ " disconnected.")
+            return False
         _                                                                                    -> atomically $ do
-          sendMessage client $ Error "100" "Unknown command or inconsistent information provided."
+          sendMessage client $ Error "100" "Unknown command."
           return True
+        where
+         error = atomically $ do sendMessage client $ Error "200" "Inconsistent information provided"; return True
+         name = clientName client
+         id = show $ clientID client
     where
      display x = do hPutStrLn (clientHdl client) ("\n" ++ x); return True
 
-noMatch :: Client -> String -> Bool
-noMatch client id 
-  | id == ( show $ clientID client) = False
-  | otherwise = True
 
 removeClient :: Client -> Int -> Chatrooms -> IO Bool
 removeClient client roomRef chatrooms = atomically $ do
