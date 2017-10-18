@@ -56,7 +56,7 @@ handleMessage chatrooms client message = do
     Error code msg             -> display ("ERROR_CODE:" ++ code ++ "\nERROR_DESCRIPTION:" ++ msg)
     Command msg                -> 
       case msg of 
-        [["CHAT:",roomRef],["JOIN_ID:",x],["CLIENT_NAME:",y],("MESSAGE:":msg)]       ->
+        [["CHAT:",roomRef],["JOIN_ID:",x],["CLIENT_NAME:",y],("MESSAGE:":msg),[],[]]       -> do
           if (x /= id || y /= name) then error
           else do
             broadcastMessage (Broadcast roomRef (clientName client) (unwords msg)) client (read roomRef :: Int) chatrooms       
@@ -82,10 +82,10 @@ handleMessage chatrooms client message = do
             print (name ++ " disconnected.")
             return False
         _                                                                                    -> atomically $ do
-          sendMessage client $ Error "100" "Unknown command."
+          sendMessage client $ Error "200" "Unknown command."
           return True
         where
-         error = atomically $ do sendMessage client $ Error "200" "Inconsistent information provided"; return True
+         error = atomically $ do sendMessage client $ Error "300" "Inconsistent information provided"; return True
          name = clientName client
          id = show $ clientID client
     where
@@ -123,7 +123,7 @@ runClient chatrooms client = do
   return ()
   where
    sender = forever $ do
-     msg <- hGetLines (clientHdl client) ""
+     msg <- getCommand (clientHdl client)
      atomically $ do sendMessage client $ Command msg
 
    receiver = join $ atomically $ do
@@ -138,7 +138,7 @@ buildClient chatrooms num hdl = do
   hClose hdl
   where 
    loop = do
-     msg <- hGetLines hdl ""
+     msg <- getCommand hdl
      case msg of
        [["JOIN_CHATROOM:",roomName],["CLIENT_IP:","0"],["PORT:","0"],["CLIENT_NAME:",clientName]] -> do
          let roomRef = hash roomName
@@ -158,13 +158,10 @@ getClients chatrooms sock num = do
   getClients chatrooms sock (num + 1)
 
 
-hGetLines :: Handle -> String -> IO [[String]]
-hGetLines hdl acc = do
-  line <- hGetLine hdl
-  more <- hReady hdl
-  if more then hGetLines hdl $ line ++ acc
-  else do
-    return $ Prelude.map words $ splitOn "\\n" $ line ++ acc
+getCommand :: Handle -> IO [[String]]
+getCommand hdl = do
+  cmd <- hGetLine hdl
+  return $ Prelude.map words $ splitOn "\\n" $ cmd
 
 main :: IO ()
 main = do

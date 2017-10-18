@@ -1,11 +1,11 @@
 
 ==================== FINAL INTERFACE ====================
-2017-10-18 12:41:26.285354 UTC
+2017-10-18 14:51:28.217394 UTC
 
 interface main@main:Main 8002
-  interface hash: b600c9df0787a48288624f6fc0816633
-  ABI hash: e853c8d026bf0641b924299ed4e5a9c1
-  export-list hash: c6956e7c5def00cf3fd2f318de1a4fd9
+  interface hash: f177043cfcbea65131dd28cb5648f1ac
+  ABI hash: 48c81731aaa7951fec700736e4d23d52
+  export-list hash: 906b8e54174c2784fa5a465bf03df315
   orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
   flag hash: 75de5e6bb661f6aa9e53de7e958ba42e
   sig of: Nothing
@@ -17,7 +17,7 @@ exports:
   Main.buildClient
   Main.fetchChatroom
   Main.getClients
-  Main.hGetLines
+  Main.getCommand
   Main.handleMessage
   Main.main
   Main.newChatroom
@@ -820,24 +820,47 @@ d6744412d63fd536f0761511aea831ac
                  case w1 of ww { Network.Socket.Types.MkSocket ww1 ww2 ww3 ww4 ww5 ->
                  case ww5 of ww6 { GHC.MVar.MVar ww7 ->
                  Main.$wgetClients w ww1 ww2 ww3 ww4 ww7 w2 w3 } }) -}
-2d8d77d08c03ea9757b3f8f8f1d9a9b1
-  hGetLines ::
-    GHC.IO.Handle.Types.Handle
-    -> GHC.Base.String -> GHC.Types.IO [[GHC.Base.String]]
-  {- Arity: 3, Strictness: <S,U><L,1*U><S,U>,
+f7d9054a06047980f2edc5a204d9e32a
+  getCommand ::
+    GHC.IO.Handle.Types.Handle -> GHC.Types.IO [[GHC.Base.String]]
+  {- Arity: 2, Strictness: <S,1*U><S,U>,
      Unfolding: InlineRule (0, True, True)
-                Main.hGetLines1
+                Main.getCommand1
                   `cast`
                 (<GHC.IO.Handle.Types.Handle>_R
-                 ->_R <GHC.Base.String>_R
                  ->_R Sym (GHC.Types.N:IO[0] <[[GHC.Base.String]]>_R)) -}
-2de5873eb56956a844a0a03204b68d82
-  hGetLines1 ::
+c81d0d4d4d1158bda5db8f168bf75f29
+  getCommand1 ::
     GHC.IO.Handle.Types.Handle
-    -> GHC.Base.String
     -> GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, [[GHC.Base.String]] #)
-  {- Arity: 3, Strictness: <S,U><L,1*U><S,U> -}
+  {- Arity: 2, Strictness: <S,1*U><S,U>,
+     Unfolding: (\ (hdl :: GHC.IO.Handle.Types.Handle)
+                   (eta :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 case GHC.IO.Handle.Internals.wantReadableHandle_1
+                        @ GHC.Base.String
+                        GHC.IO.Handle.Text.hGetLine4
+                        hdl
+                        GHC.IO.Handle.Text.hGetLine2
+                          `cast`
+                        (<GHC.IO.Handle.Types.Handle__>_R
+                         ->_R Sym (GHC.Types.N:IO[0] <GHC.Base.String>_R))
+                        eta of ds1 { (#,#) ipv ipv1 ->
+                 (# ipv,
+                    GHC.Base.map
+                      @ [GHC.Types.Char]
+                      @ [GHC.Base.String]
+                      Data.OldList.words
+                      (Main.getCommand2 ipv1) #) }) -}
+ba6af07dcd43d7de815a5ab2f774a562
+  getCommand2 :: [GHC.Types.Char] -> [[GHC.Types.Char]]
+  {- Unfolding: (Data.List.Split.Internals.splitOn
+                   @ GHC.Types.Char
+                   GHC.Classes.$fEqChar
+                   Main.getCommand3) -}
+b6aa819f0c184b2c624f6ae8e21c1d1a
+  getCommand3 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "\\n"#) -}
 ce46f6b6f88a62be92933591873038b1
   handleMessage ::
     Main.Chatrooms
@@ -1130,7 +1153,7 @@ ca64637f3abf8314c792f8410ac56e7f
      Unfolding: InlineRule (1, True, False)
                 (\ (ds :: Main.Chatroom) ->
                  case ds of wild { Main.Chatroom ds1 ds2 ds3 -> ds2 }) -}
-d2baea7a847448000f2f705f695825d5
+8916f5d704660e0b8de2f0969e6d027d
   runClient :: Main.Chatrooms -> Main.Client -> GHC.Types.IO ()
   {- Arity: 3, Strictness: <L,U(U)><L,U(U,U(U,U),U,U(U))><S,U>,
      Unfolding: InlineRule (0, True, True)
@@ -1139,7 +1162,7 @@ d2baea7a847448000f2f705f695825d5
                 (<Main.Chatrooms>_R
                  ->_R <Main.Client>_R
                  ->_R Sym (GHC.Types.N:IO[0] <()>_R)) -}
-d444d4c7849120699a2a8a2b525a014c
+4a1e03b3b952b43bf4a6098f05d6a877
   runClient1 ::
     Main.Chatrooms
     -> Main.Client
@@ -1218,38 +1241,48 @@ d444d4c7849120699a2a8a2b525a014c
                              {- Arity: 1, Strictness: <S,U> -}
                            = \ (s1 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
                              case client of wild { Main.Client ds ds1 ds2 ds3 ->
-                             case Main.hGetLines1
+                             case GHC.IO.Handle.Internals.wantReadableHandle_1
+                                    @ GHC.Base.String
+                                    GHC.IO.Handle.Text.hGetLine4
                                     ds2
-                                    (GHC.Types.[] @ GHC.Types.Char)
+                                    GHC.IO.Handle.Text.hGetLine2
+                                      `cast`
+                                    (<GHC.IO.Handle.Types.Handle__>_R
+                                     ->_R Sym (GHC.Types.N:IO[0] <GHC.Base.String>_R))
                                     s1 of ds4 { (#,#) ipv ipv1 ->
                              case GHC.Prim.atomically#
                                     @ ()
-                                    (\ (w :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
-                                     case ds1 of ww { Control.Concurrent.STM.TChan.TChan ww1 ww2 ->
+                                    (\ (eta1 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                                     case ds1 of wild1 { Control.Concurrent.STM.TChan.TChan dt dt1 ->
                                      case GHC.Prim.readTVar#
                                             @ GHC.Prim.RealWorld
                                             @ (Control.Concurrent.STM.TChan.TVarList Main.Message)
-                                            ww2
-                                            w of ds5 { (#,#) ipv2 ipv3 ->
+                                            dt1
+                                            eta1 of ds5 { (#,#) ipv2 ipv3 ->
                                      case GHC.Prim.newTVar#
                                             @ (Control.Concurrent.STM.TChan.TList Main.Message)
                                             @ GHC.Prim.RealWorld
                                             (Control.Concurrent.STM.TChan.TNil @ Main.Message)
                                             ipv2 of ds6 { (#,#) ipv4 ipv5 ->
-                                     case ipv3 of wild1 { GHC.Conc.Sync.TVar tvar# ->
+                                     case ipv3 of wild2 { GHC.Conc.Sync.TVar tvar# ->
                                      case GHC.Prim.writeTVar#
                                             @ GHC.Prim.RealWorld
                                             @ (Control.Concurrent.STM.TChan.TList Main.Message)
                                             tvar#
                                             (Control.Concurrent.STM.TChan.TCons
                                                @ Main.Message
-                                               (Main.Command ipv1)
+                                               (Main.Command
+                                                  (GHC.Base.map
+                                                     @ [GHC.Types.Char]
+                                                     @ [GHC.Base.String]
+                                                     Data.OldList.words
+                                                     (Main.getCommand2 ipv1)))
                                                ipv5)
                                             ipv4 of s2# { DEFAULT ->
                                      case GHC.Prim.writeTVar#
                                             @ GHC.Prim.RealWorld
                                             @ (Control.Concurrent.STM.TChan.TVarList Main.Message)
-                                            ww2
+                                            dt1
                                             (GHC.Conc.Sync.TVar
                                                @ (Control.Concurrent.STM.TChan.TList Main.Message)
                                                ipv5)
