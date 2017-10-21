@@ -1,6 +1,8 @@
 module Main where
 import Network.Socket hiding (Broadcast)
 import System.IO
+import System.Exit
+import System.Environment
 import Control.Monad
 import Control.Concurrent
 import Control.Concurrent.STM
@@ -9,6 +11,7 @@ import Data.Map as Map
 import Data.Char
 import Data.Hashable
 import Data.List.Split
+import Data.Maybe
 
 data Message = Command [[String]] | Error String String | Broadcast String String String | Response String
 
@@ -66,7 +69,7 @@ handleMessage chatrooms client message = do
           else do
             addClient client roomName chatrooms
             broadcastMessage (Broadcast (show $ hash roomName) (clientName client) "has joined the chat." ) client (hash roomName) chatrooms  
-            print ("client["++ name ++"] added to room: " ++ roomName)
+            putStrLn ("client["++ name ++"] added to room: " ++ roomName)
             return True
         [["LEAVE_CHATROOM:",roomRef],["JOIN_ID:",x],["CLIENT_NAME:",y]]                  -> do
           if (x /= id || y /= name) then error
@@ -74,12 +77,12 @@ handleMessage chatrooms client message = do
             left <- removeClient client (read roomRef :: Int) chatrooms
             when left $ do
               broadcastMessage (Broadcast roomRef (clientName client) "Has left the chatroom.") client (read roomRef :: Int) chatrooms
-              print ("client["++ name ++"] has left chatroom: " ++ roomRef)
+              putStrLn ("client["++ name ++"] has left chatroom: " ++ roomRef)
             return True
         [["DISCONNECT:","0"],["PORT:","0"],["CLIENT_NAME:",y]]                            -> do
           if ( y /= name) then error
           else do
-            print (name ++ " disconnected.")
+            putStrLn (name ++ " disconnected.")
             return False
         _                                                                                    -> atomically $ do
           sendMessage client $ Error "200" "Unknown command."
@@ -132,44 +135,51 @@ runClient chatrooms client = do
        continue <- handleMessage chatrooms client msg
        when continue $ receiver
 
-buildClient :: Chatrooms -> Int -> Handle -> IO ()
-buildClient chatrooms num hdl = do
+buildClient :: Chatrooms -> Int -> Handle -> (HostName, String) -> IO ()
+buildClient chatrooms num hdl (ip,port) = do
   loop
   hClose hdl
   where 
    loop = do
      msg <- getCommand hdl
      case msg of
+       [["HELO","text"],[]] -> do
+         hPutStrLn hdl ("HELO text\nIP:"++ ip ++"\nPort:"++ port ++"\nStudentID: 14314836\n") >> loop
        [["JOIN_CHATROOM:",roomName],["CLIENT_IP:","0"],["PORT:","0"],["CLIENT_NAME:",clientName]] -> do
          let roomRef = hash roomName
          client <- newClient num clientName hdl
          addClient client roomName chatrooms
          broadcastMessage (Broadcast (show $ roomRef) clientName "has joined the chat." ) client roomRef chatrooms  
-         print ("New client["++ clientName ++"]["++ show num ++"] added to room: " ++ roomName)
+         putStrLn ("New client["++ clientName ++"]["++ show num ++"] added to room: " ++ roomName)
          runClient chatrooms client
        _                    -> hPutStrLn hdl "ERROR_CODE:100\nERROR_DESCRIPTION:Please join a chatroom before continuing." >> loop
 
-getClients :: Chatrooms -> Socket -> Int -> IO ()
-getClients chatrooms sock num = do
+getClients :: Chatrooms -> Socket -> Int -> String -> IO ()
+getClients chatrooms sock num port = do
   conn <- accept sock
   hdl <- socketToHandle (fst conn) ReadWriteMode
   hSetBuffering hdl NoBuffering
-  forkIO $ buildClient chatrooms num hdl
-  getClients chatrooms sock (num + 1)
+  sockName <- getSocketName sock
+  (ip,_) <- getNameInfo [] True False sockName
+  forkIO $ buildClient chatrooms num hdl (fromJust ip, port)
+  getClients chatrooms sock (num + 1) port
 
 
 getCommand :: Handle -> IO [[String]]
 getCommand hdl = do
   cmd <- hGetLine hdl
+  when (cmd == "KILL_SERVICE\\n\r") $ exitSuccess
   return $ Prelude.map words $ splitOn "\\n" $ cmd
 
 main :: IO ()
 main = do
   sock <- socket AF_INET Stream 0
   setSocketOption sock ReuseAddr 1
-  bind sock $ SockAddrInet 5555 iNADDR_ANY
+  arg <- getArgs
+  let port = read $ head arg :: PortNumber
+  bind sock $ SockAddrInet port iNADDR_ANY
   listen sock 5
   chatrooms <- atomically $ newTVar Map.empty
-  print "Server started... Listening on port 5555"
-  getClients chatrooms sock 1
+  putStrLn ("Server started... Listening on port: "++ (head arg))
+  getClients chatrooms sock 1 (head arg)
 
