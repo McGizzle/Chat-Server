@@ -151,7 +151,8 @@ buildClient chatrooms num hdl (ip,port) = do
          let roomRef = hash roomName
          client <- newClient num clientName hdl
          addClient client roomName chatrooms
-         broadcastMessage (Broadcast (show $ roomRef) clientName (clientName ++" has joined the chat." )) client roomRef chatrooms  
+         broadcastMessage (Broadcast (show $ roomRef) clientName (clientName ++" has joined the chat." )) client roomRef chatrooms 
+         hPutStrLn hdl ("JOINED_CHATROOM:" ++ roomName ++ "\nSERVER_IP:\nPORT:\nROOM_REF:"++ (show $ hash roomName) ++ "\nJOIN_ID:" ++ (show $ num)) 
          putStrLn ("New client["++ clientName ++"]["++ show num ++"] added to room: " ++ roomName)
          runClient chatrooms client
        _                    -> hPutStrLn hdl "ERROR_CODE:100\nERROR_DESCRIPTION:Please join a chatroom before continuing." >> loop
