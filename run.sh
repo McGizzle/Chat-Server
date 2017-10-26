@@ -1,2 +1,2 @@
 #!/bin/bash
-stack exec Chat-Server-exe $1
+stack exec Chat-Server-exe $1 
