@@ -60,12 +60,12 @@ handleMessage chatrooms client message = do
     Error code msg               -> display ("ERROR_CODE:" ++ code ++ "\nERROR_DESCRIPTION:" ++ msg)
     Command msg info             -> 
       case msg of 
-       [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",clientName]] -> do
+       [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",clientName]]     -> do
          addClient client roomName chatrooms
          broadcastMessage (Broadcast (show $ hash $ roomName) name (name ++ " has joined the chatroom.")) client (hash roomName) chatrooms
          putStrLn ("client["++ name ++"] added to room: " ++ roomName)
          return True
-       [["JOIN_ID:",id],["CLIENT_NAME:",clientName]] -> do
+       [["JOIN_ID:",id],["CLIENT_NAME:",clientName]]                  -> do
          left <- removeClient client (read roomRef :: Int) chatrooms
          when left $ do
            broadcastMessage (Broadcast roomRef name (name ++" has left the chatroom.")) client (read roomRef :: Int) chatrooms
@@ -73,7 +73,9 @@ handleMessage chatrooms client message = do
          return True
        [["JOIN_ID:",id],["CLIENT_NAME:",clientName],("MESSAGE:":msg)] -> do
          broadcastMessage (Broadcast roomRef name (unwords msg)) client (read roomRef :: Int) chatrooms
-         return True       
+         return True   
+       [["PORT:",_],["CLIENT_NAME:",clientName]]                      -> do
+         return False    
        _                          -> do error; return True
        where 
         roomName = info
@@ -126,6 +128,10 @@ runClient chatrooms client = do
       ["CHAT:",roomRef]           -> do
             cmds <- repeat 3
             send cmds roomRef
+      ["DISCONNECT:",_]           -> do
+            cmds <- repeat 2
+            send cmds ""
+            
       _                           -> error
       where
        send :: [String] -> String -> IO ()
@@ -147,6 +153,7 @@ buildClient chatrooms num hdl (ip,port) = do
    loop = do
      cmd <- hGetLine hdl
      case words cmd of
+       ["KILL_SERVICE"]            -> return ()
        ["HELO","BASE"]             -> do
          hPutStrLn hdl ("HELO text\nIP:"++ ip ++"\nPort:"++ port ++"\nStudentID: 14314836") >> loop
        ["JOIN_CHATROOM:",roomName] -> do
@@ -180,10 +187,10 @@ main = do
   setSocketOption sock ReuseAddr 1
   args <- getArgs
   let port = head args
-
   bind sock $ SockAddrInet 5555 iNADDR_ANY
   listen sock 5
   chatrooms <- atomically $ newTVar Map.empty
   putStrLn ("Server started... Listening on port: "++ port)
   getClients chatrooms sock 1 port
+  return ()
 

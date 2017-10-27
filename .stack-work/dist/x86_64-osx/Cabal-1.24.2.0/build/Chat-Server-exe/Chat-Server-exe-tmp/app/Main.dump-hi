@@ -1,10 +1,10 @@
 
 ==================== FINAL INTERFACE ====================
-2017-10-26 21:23:08.247249 UTC
+2017-10-27 00:57:30.167031 UTC
 
 interface main@main:Main 8002
-  interface hash: 3829fd1830eec36097e6ffdb2ce3c9e9
-  ABI hash: ab9492f7a3ce57773aa011e652eda0b0
+  interface hash: 7a226dbb0a20e53be05316ec2677ce57
+  ABI hash: f1b32eafaf4461adb807c64bb8c5e2cf
   export-list hash: 636dfc08d76b7e71c1f6968c77fe036e
   orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
   flag hash: 75de5e6bb661f6aa9e53de7e958ba42e
@@ -858,12 +858,12 @@ e2874a9dc37c3745a9605ae8e4fbedeb
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, GHC.Types.Bool #)
   {- Arity: 4,
      Strictness: <L,U(U)><L,U(U,U(U,U),U,U(U))><S,1*U><S,U> -}
-53a9f94e990732c130621637c6f0defa
+b039dcbd9896a342fe48ab7bd35b2711
   main :: GHC.Types.IO ()
   {- Arity: 1, Strictness: <S,U>,
      Unfolding: InlineRule (0, True, True)
                 Main.main1 `cast` (Sym (GHC.Types.N:IO[0] <()>_R)) -}
-f51784ef273822b99058a166e0b1de99
+20247e91aea406025202a81f7a624e40
   main1 ::
     GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
@@ -909,16 +909,17 @@ f51784ef273822b99058a166e0b1de99
                            port)
                         GHC.Types.True
                         ipv10 of ds7 { (#,#) ipv12 ipv13 ->
-                 Main.$wgetClients
-                   ipv11
-                   ww1
-                   ww2
-                   ww3
-                   ww4
-                   ww7
-                   Main.main6
-                   port
-                   ipv12 } } } } } } } } }) -}
+                 case Main.$wgetClients
+                        ipv11
+                        ww1
+                        ww2
+                        ww3
+                        ww4
+                        ww7
+                        Main.main6
+                        port
+                        ipv12 of ds8 { (#,#) ipv14 ipv15 ->
+                 (# ipv14, GHC.Tuple.() #) } } } } } } } } } }) -}
 91551b0853947ddd4dfe443fd394b78b
   main2 ::
     GHC.Prim.State# GHC.Prim.RealWorld
@@ -961,7 +962,7 @@ dd25b60ff45b656887167b14f0fc94bb
 1e5926b799ede3e39e77f50a7b1cca01
   main6 :: GHC.Types.Int
   {- HasNoCafRefs, Unfolding: (GHC.Types.I# 1#) -}
-641114e2ecd70f57ac2ac9274e6d5031
+7180d04c3ed990cfe92cc275856e3751
   main7 ::
     GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
