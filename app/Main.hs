@@ -167,7 +167,8 @@ buildClient chatrooms num hdl (ip,port) = do
              addClient client roomName chatrooms
              hPutStrLn hdl ("JOINED_CHATROOM:" ++ roomName ++ "\nSERVER_IP:"++ ip ++"\nPORT:0\nROOM_REF:"++ (show $ hash roomName) ++ "\nJOIN_ID:" ++ (show $ num)) 
              putStrLn ("New client["++ clientName ++"]["++ show num ++"] added to room: " ++ roomName)
-             forkIO $ runClient chatrooms client >> broadcastMessage (Broadcast (show roomRef) clientName (clientName ++" has joined the chat." )) client roomRef chatrooms
+             broadcastMessage (Broadcast (show roomRef) clientName (clientName ++" has joined the chat." )) client roomRef chatrooms
+             runClient chatrooms client
              return ()
            _                                                   -> hPutStrLn hdl "ERROR_CODE:100\nERROR_DESCRIPTION:Incomplete." >> loop 
          where roomRef = hash roomName
@@ -180,7 +181,7 @@ getClients chatrooms sock num port = do
   hSetBuffering hdl NoBuffering
   sockName <- getSocketName sock
   (ip,_) <- getNameInfo [] True False sockName
-  buildClient chatrooms num hdl (fromJust ip, port)
+  forkIO $ buildClient chatrooms num hdl (fromJust ip, port)
   getClients chatrooms sock (num + 1) port
 
 main :: IO ()
