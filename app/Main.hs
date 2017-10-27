@@ -165,8 +165,8 @@ buildClient chatrooms num hdl (ip,port) = do
            [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",clientName]] -> do
              client <- newClient num clientName hdl
              addClient client roomName chatrooms
-             broadcastMessage (Broadcast (show roomRef) clientName (clientName ++" has joined the chat." )) client roomRef chatrooms 
              hPutStrLn hdl ("JOINED_CHATROOM:" ++ roomName ++ "\nSERVER_IP:"++ ip ++"\nPORT:0\nROOM_REF:"++ (show $ hash roomName) ++ "\nJOIN_ID:" ++ (show $ num)) 
+             broadcastMessage (Broadcast (show roomRef) clientName (clientName ++" has joined the chat." )) client roomRef chatrooms 
              putStrLn ("New client["++ clientName ++"]["++ show num ++"] added to room: " ++ roomName)
              runClient chatrooms client
            _                                                   -> hPutStrLn hdl "ERROR_CODE:100\nERROR_DESCRIPTION:Incomplete." >> loop 
