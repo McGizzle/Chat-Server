@@ -109,7 +109,7 @@ addClient client roomName chatrooms = atomically $ do
       roomMap <- readTVar (clients room)
       let newRoom = Map.insert (clientID client) client roomMap
       writeTVar (clients room) newRoom
-  sendMessage client $ Response ("JOINED_CHATROOM:" ++ roomName ++ "\nSERVER_IP:\nPORT:\nROOM_REF:"++ (show $ hash roomName) ++ "\nJOIN_ID:" ++ (show $ clientID client))
+  sendMessage client $ Response ("JOINED_CHATROOM:" ++ roomName ++ "\nSERVER_IP:0\nPORT:0\nROOM_REF:"++ (show $ hash roomName) ++ "\nJOIN_ID:" ++ (show $ clientID client))
 
 runClient :: Chatrooms -> Client -> IO ()
 runClient chatrooms client = do
