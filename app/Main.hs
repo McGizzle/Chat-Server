@@ -66,6 +66,7 @@ handleMessage chatrooms client message = do
          putStrLn ("client["++ name ++"] added to room: " ++ roomName)
          return True
        [["JOIN_ID:",id],["CLIENT_NAME:",clientName]]                  -> do
+         print "LEAVING"
          left <- removeClient client (read roomRef :: Int) chatrooms
          when left $ do
            broadcastMessage (Broadcast roomRef name (name ++" has left the chatroom.")) client (read roomRef :: Int) chatrooms
@@ -118,6 +119,7 @@ runClient chatrooms client = do
   where
    sender = forever $ do
      msg <- hGetLine (clientHdl client)
+     print ("DEBUG: "++msg)
      case words msg of 
       ["JOIN_CHATROOM:",roomName] -> do
             cmds <- repeat 3
@@ -155,17 +157,13 @@ buildClient chatrooms num hdl (ip,port) = do
      case words cmd of
        ["KILL_SERVICE"]            -> return ()
        ["HELO","BASE_TEST"]        -> do
-         --hPutStrLn hdl ("HELO BASE_TEST\nIP:"++ ip ++"\nPort:"++ port ++"\nStudentID: 14314836\n") >> loop
-         mapM_ (hPutStrLn hdl) x >> loop 
-         where x = ["HELO BASE_TEST","IP:"++ ip,"Port:"++ port,"StudentID: 14314836"]
+         hPutStrLn hdl ("HELO BASE_TEST\nIP:"++ ip ++"\nPort:"++ port ++"\nStudentID: 14314836\n") >> loop
        ["JOIN_CHATROOM:",roomName] -> do
          cmds <- replicateM 3 $ hGetLine hdl
-         print $ words cmd
          case map words cmds of
            [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",clientName]] -> do
              client <- newClient num clientName hdl
              addClient client roomName chatrooms
-             --hPutStrLn hdl ("JOINED_CHATROOM:" ++ roomName ++ "\nSERVER_IP:"++ ip ++"\nPORT:0\nROOM_REF:"++ (show $ hash roomName) ++ "\nJOIN_ID:" ++ (show $ num)) 
              putStrLn ("New client["++ clientName ++"]["++ show num ++"] added to room: " ++ roomName)
              broadcastMessage (Broadcast (show roomRef) clientName (clientName ++" has joined the chat." )) client roomRef chatrooms
              runClient chatrooms client
@@ -190,10 +188,9 @@ main = do
   setSocketOption sock ReuseAddr 1
   args <- getArgs
   let port = head args
-  bind sock $ SockAddrInet 5555 iNADDR_ANY
+  bind sock $ SockAddrInet (read port :: PortNumber) iNADDR_ANY
   listen sock 5
   chatrooms <- atomically $ newTVar Map.empty
   putStrLn ("Server started... Listening on port: "++ port)
   getClients chatrooms sock 1 port
-  return ()
 
