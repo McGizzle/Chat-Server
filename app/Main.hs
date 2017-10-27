@@ -114,13 +114,15 @@ addClient client roomName chatrooms = atomically $ do
 
 runClient :: Chatrooms -> Client -> IO ()
 runClient chatrooms client = do
+  putStrLn ("Client["++ clientName client  ++"] running.")
   race receiver sender
   return ()
   where
    sender = forever $ do
-     msg <- hGetLine (clientHdl client)
-     print ("DEBUG: "++msg)
-     case words msg of 
+     hFlush $ clientHdl client
+     cmd <- hGetLine $ clientHdl client 
+     print ("DEBUG: "++cmd)
+     case words cmd of 
       ["JOIN_CHATROOM:",roomName] -> do
             cmds <- repeat 3
             send cmds roomName
@@ -167,7 +169,6 @@ buildClient chatrooms num hdl (ip,port) = do
              putStrLn ("New client["++ clientName ++"]["++ show num ++"] added to room: " ++ roomName)
              broadcastMessage (Broadcast (show roomRef) clientName (clientName ++" has joined the chat." )) client roomRef chatrooms
              runClient chatrooms client
-             return ()
            _                                                   -> hPutStrLn hdl "ERROR_CODE:100\nERROR_DESCRIPTION:Incomplete." >> loop 
          where roomRef = hash roomName
        _                            -> hPutStrLn hdl "ERROR_CODE:100\nERROR_DESCRIPTION:Please join a chatroom before continuing." >> loop
@@ -176,7 +177,7 @@ getClients :: Chatrooms -> Socket -> Int -> String -> IO ()
 getClients chatrooms sock num port = do
   conn <- accept sock
   hdl <- socketToHandle (fst conn) ReadWriteMode
-  hSetBuffering hdl NoBuffering
+  hSetBuffering hdl LineBuffering
   sockName <- getSocketName sock
   (ip,_) <- getNameInfo [] True False sockName
   forkIO $ buildClient chatrooms num hdl (fromJust ip, port)
