@@ -155,7 +155,9 @@ buildClient chatrooms num hdl (ip,port) = do
      case words cmd of
        ["KILL_SERVICE"]            -> return ()
        ["HELO","BASE_TEST"]        -> do
-         hPutStrLn hdl ("HELO BASE_TEST\nIP:"++ ip ++"\nPort:"++ port ++"\nStudentID: 14314836\n") >> loop
+         --hPutStrLn hdl ("HELO BASE_TEST\nIP:"++ ip ++"\nPort:"++ port ++"\nStudentID: 14314836\n") >> loop
+         mapM_ (hPutStrLn hdl) x >> loop 
+         where x = ["HELO BASE_TEST","IP:"++ ip,"Port:"++ port,"StudentID: 14314836"]
        ["JOIN_CHATROOM:",roomName] -> do
          cmds <- replicateM 3 $ hGetLine hdl
          print $ words cmd
@@ -164,7 +166,7 @@ buildClient chatrooms num hdl (ip,port) = do
              client <- newClient num clientName hdl
              addClient client roomName chatrooms
              broadcastMessage (Broadcast (show roomRef) clientName (clientName ++" has joined the chat." )) client roomRef chatrooms 
-             hPutStrLn hdl ("JOINED_CHATROOM:" ++ roomName ++ "\nSERVER_IP:0\nPORT:0\nROOM_REF:"++ (show $ hash roomName) ++ "\nJOIN_ID:" ++ (show $ num)) 
+             hPutStrLn hdl ("JOINED_CHATROOM:" ++ roomName ++ "\nSERVER_IP:"++ ip ++"\nPORT:0\nROOM_REF:"++ (show $ hash roomName) ++ "\nJOIN_ID:" ++ (show $ num)) 
              putStrLn ("New client["++ clientName ++"]["++ show num ++"] added to room: " ++ roomName)
              runClient chatrooms client
            _                                                   -> hPutStrLn hdl "ERROR_CODE:100\nERROR_DESCRIPTION:Incomplete." >> loop 
