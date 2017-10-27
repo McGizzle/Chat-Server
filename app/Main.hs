@@ -154,8 +154,8 @@ buildClient chatrooms num hdl (ip,port) = do
      cmd <- hGetLine hdl
      case words cmd of
        ["KILL_SERVICE"]            -> return ()
-       ["HELO","BASE_TEST"]             -> do
-         hPutStrLn hdl ("HELO text\nIP:"++ ip ++"\nPort:"++ port ++"\nStudentID: 14314836") >> loop
+       ["HELO","BASE_TEST"]        -> do
+         hPutStrLn hdl ("HELO BASE_TEST\nIP:"++ ip ++"\nPort:"++ port ++"\nStudentID: 14314836\n") >> loop
        ["JOIN_CHATROOM:",roomName] -> do
          cmds <- replicateM 3 $ hGetLine hdl
          print $ words cmd
