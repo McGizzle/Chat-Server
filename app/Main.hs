@@ -15,16 +15,6 @@ import Utils
 import Client
 import Chatroom
 
-broadcastMessage :: Message -> Client -> Int -> Chatrooms -> IO ()
-broadcastMessage msg client roomRef chatrooms = do
-  c <- fetchChatroom roomRef chatrooms
-  atomically $ do
-    case c of
-      Nothing -> sendMessage client $ Error "200" "This chatroom does not exist"
-      Just room -> do
-        roomMap <- readTVar (clients room)
-        mapM_ (\c -> sendMessage c msg) (Map.elems roomMap)
- 
 handleMessage :: Chatrooms -> Client -> Message -> IO Bool
 handleMessage chatrooms client message = do
   case message of
@@ -40,9 +30,10 @@ handleMessage chatrooms client message = do
          putStrLn ("client["++ name ++"] added to room: " ++ roomName)
          return True
        [["JOIN_ID:",id],["CLIENT_NAME:",clientName]]                  -> do
-         left <- removeClient client (read roomRef :: Int) chatrooms
+         left <- removeClient client (read roomRef :: Int) chatrooms True
          when left $ do
-          -- atomically $ do sendMessage client $ Broadcast roomRef name (name ++ " has left the chatroom.")
+      --     atomically $ do sendMessage client $ Response ("LEFT_CHATROOM:" ++ show roomRef  ++ "\nJOIN_ID:" ++ (show $ clientID client))
+--           atomically $ do sendMessage client $ Broadcast roomRef name (name ++ " has left the chatroom.")
            broadcastMessage (Broadcast roomRef name (name ++" has left the chatroom.")) client (read roomRef :: Int) chatrooms
            putStrLn ("client["++ name ++"] has left chatroom: " ++ roomRef)
          return True
@@ -51,8 +42,7 @@ handleMessage chatrooms client message = do
          putStrLn ("client["++ id ++ "] successfully sent a chat message.")
          return True   
        [["PORT:",_],["CLIENT_NAME:",clientName]]                      -> do
-         disconnClient client chatrooms
-         return False    
+         disconnClient client chatrooms >> return True
        _                          -> do error; return True
        where 
         roomName = info
@@ -133,7 +123,7 @@ getConns chatrooms sock num port = do
   hSetBuffering hdl NoBuffering
   sockName <- getSocketName sock
   (ip,_) <- getNameInfo [] True False sockName
-  forkFinally (buildClient chatrooms num hdl (fromJust ip, port)) (\_ -> do putStrLn ("Client["++ show num ++"] disconnected"); hClose hdl)
+  forkFinally (buildClient chatrooms num hdl (fromJust ip, port)) (\_ -> do putStrLn ("Client["++ show num ++"] disconnected"))
   getConns chatrooms sock (num + 1) port
 
 main :: IO ()
