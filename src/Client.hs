@@ -21,9 +21,13 @@ removeClient client roomRef chatrooms = do
     Nothing -> return False
     Just room -> atomically $ do
       clientList <- readTVar (clients room)
-      unless (Map.notMember (clientID client) clientList) $ sendMessage client $ Response ("LEFT_CHATROOM:" ++ show roomRef  ++ "\nJOIN_ID:" ++ (show $ clientID client))
+      unless (Map.notMember (clientID client) clientList) $ do
+        sendMessage client $ Response ("LEFT_CHATROOM:" ++ show roomRef  ++ "\nJOIN_ID:" ++ (show $ clientID client))
+        sendMessage client $ Broadcast (show roomRef) name (name ++ " has left the chatroom.")
       modifyTVar' (clients room) $ Map.delete (clientID client)
-      return True    
+      return True
+   where
+    name = clientName client    
 
 addClient :: Client -> String -> Chatrooms -> IO ()
 addClient client roomName chatrooms = atomically $ do

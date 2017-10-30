@@ -42,7 +42,7 @@ handleMessage chatrooms client message = do
        [["JOIN_ID:",id],["CLIENT_NAME:",clientName]]                  -> do
          left <- removeClient client (read roomRef :: Int) chatrooms
          when left $ do
-           atomically $ do sendMessage client $ Broadcast roomRef name (name ++ " has left the chatroom.")
+          -- atomically $ do sendMessage client $ Broadcast roomRef name (name ++ " has left the chatroom.")
            broadcastMessage (Broadcast roomRef name (name ++" has left the chatroom.")) client (read roomRef :: Int) chatrooms
            putStrLn ("client["++ name ++"] has left chatroom: " ++ roomRef)
          return True
