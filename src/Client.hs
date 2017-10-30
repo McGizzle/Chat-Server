@@ -4,6 +4,7 @@ import Data.Hashable (hash)
 import Data.Map as Map
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
+import Control.Monad (unless)
 import System.IO
 import Utils
 import Chatroom
@@ -16,13 +17,13 @@ newClient num name hdl = do
 removeClient :: Client -> Int -> Chatrooms -> IO Bool
 removeClient client roomRef chatrooms = do
   c <- fetchChatroom roomRef chatrooms
-  atomically $ do
-    case c of 
-      Nothing -> return False
-      Just room -> do
-        sendMessage client $ Response ("LEFT_CHATROOM:" ++ show roomRef  ++ "\nJOIN_ID:" ++ (show $ clientID client))
-        modifyTVar' (clients room) $ Map.delete (clientID client)
-        return True    
+  case c of 
+    Nothing -> return False
+    Just room -> atomically $ do
+      clientList <- readTVar (clients room)
+      unless (Map.notMember (clientID client) clientList) $ sendMessage client $ Response ("LEFT_CHATROOM:" ++ show roomRef  ++ "\nJOIN_ID:" ++ (show $ clientID client))
+      modifyTVar' (clients room) $ Map.delete (clientID client)
+      return True    
 
 addClient :: Client -> String -> Chatrooms -> IO ()
 addClient client roomName chatrooms = atomically $ do
@@ -37,6 +38,10 @@ addClient client roomName chatrooms = atomically $ do
       roomMap <- readTVar (clients room)
       let newRoom = Map.insert (clientID client) client roomMap
       writeTVar (clients room) newRoom
-  sendMessage client $ Response $ "JOINED_CHATROOM:" ++ roomName ++ "\rSERVER_IP:0.0.0.0\rPORT:0\nROOM_REF:"++ (show $ hash roomName) ++ "\nJOIN_ID:" ++ (show $ clientID client)
+  sendMessage client $ Response $ "JOINED_CHATROOM:" ++ roomName ++ "\nSERVER_IP:0.0.0.0\nPORT:0\nROOM_REF:"++ (show $ hash roomName) ++ "\nJOIN_ID:" ++ (show $ clientID client)
 
-
+disconnClient :: Client -> Chatrooms -> IO ()
+disconnClient client chatrooms = do
+  chats <- readTVarIO chatrooms 
+  mapM_ (\s -> removeClient client s chatrooms) (Map.keys chats) 
+    

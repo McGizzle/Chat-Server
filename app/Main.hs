@@ -51,6 +51,7 @@ handleMessage chatrooms client message = do
          putStrLn ("client["++ id ++ "] successfully sent a chat message.")
          return True   
        [["PORT:",_],["CLIENT_NAME:",clientName]]                      -> do
+         disconnClient client chatrooms
          return False    
        _                          -> do error; return True
        where 
@@ -105,7 +106,6 @@ runClient chatrooms client = do
 buildClient :: Chatrooms -> Int -> Handle -> (String, String) -> IO ()
 buildClient chatrooms num hdl (ip,port) = do
   loop
-  hClose hdl
   return ()
   where 
    loop = do
@@ -133,7 +133,7 @@ getConns chatrooms sock num port = do
   hSetBuffering hdl NoBuffering
   sockName <- getSocketName sock
   (ip,_) <- getNameInfo [] True False sockName
-  forkFinally (buildClient chatrooms num hdl (fromJust ip, port)) (\_ -> do putStrLn ("Client["++ show num ++"] disconnected"))
+  forkFinally (buildClient chatrooms num hdl (fromJust ip, port)) (\_ -> do putStrLn ("Client["++ show num ++"] disconnected"); hClose hdl)
   getConns chatrooms sock (num + 1) port
 
 main :: IO ()
