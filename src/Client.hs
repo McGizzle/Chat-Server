@@ -2,6 +2,7 @@ module Client where
 
 import Data.Hashable (hash)
 import Data.Map as Map
+import Data.List
 import Control.Concurrent.STM.TChan
 import Control.Concurrent.STM
 import Control.Monad (unless, when)
@@ -23,11 +24,12 @@ removeClient client roomRef chatrooms leaving = do
       clientList <- readTVar (clients room)
       when leaving $ sendMessage client $ Response ("LEFT_CHATROOM:" ++ show roomRef  ++ "\nJOIN_ID:" ++ (show $ clientID client))
       unless (Map.notMember (clientID client) clientList) $ do
-        sendMessage client $ Broadcast (show roomRef) name (name ++ " has left the chatroom.")
+        mapM_ (\c -> sendMessage c msg) (Map.elems clientList)
       modifyTVar' (clients room) $ Map.delete (clientID client)
       return True
    where
     name = clientName client    
+    msg = Broadcast (show roomRef) (clientName client) ((clientName client) ++" has left the chatroom.")
 
 addClient :: Client -> String -> Chatrooms -> IO ()
 addClient client roomName chatrooms = atomically $ do
@@ -46,10 +48,10 @@ addClient client roomName chatrooms = atomically $ do
 
 disconnClient :: Client -> Chatrooms -> IO ()
 disconnClient client chatrooms = do
-  chats <- atomically $ readTVar chatrooms 
-  mapM_ (\roomRef -> remove roomRef) (reverse $ Map.keys chats)      
+  chats <- atomically $ readTVar chatrooms
+  let names = Prelude.map (\room -> roomName room) (Map.elems chats)
+  mapM_ (\name -> remove $ hash name) (sort names)      
   where
    remove s = do
      removeClient client s chatrooms False 
-     broadcastMessage (Broadcast (show s) (clientName client) ((clientName client) ++" has left the chatroom.")) client s chatrooms
-     putStrLn ("removing client["++ show (clientID client) ++ "] from room["++ show s ++"]")
+     putStrLn ("removed client["++ show (clientID client) ++ "] from room["++ show s ++"]")
