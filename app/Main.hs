@@ -32,7 +32,6 @@ handleMessage chatrooms client message = do
        [["JOIN_ID:",id],["CLIENT_NAME:",clientName]]                  -> do
          left <- removeClient client (read roomRef :: Int) chatrooms True
          when left $ do
-        --   broadcastMessage (Broadcast roomRef name (name ++" has left the chatroom.")) client (read roomRef :: Int) chatrooms
            putStrLn ("client["++ name ++"] has left chatroom: " ++ roomRef)
          return True
        [["JOIN_ID:",id],["CLIENT_NAME:",clientName],("MESSAGE:":msg),[]] -> do
@@ -40,7 +39,6 @@ handleMessage chatrooms client message = do
          putStrLn ("client["++ id ++ "] successfully sent a chat message.")
          return True   
        [["PORT:",_],["CLIENT_NAME:",clientName]]                      -> do
-         putStrLn ("client leaving -> " ++ name)
          disconnClient client chatrooms
          return True
        _                          -> do error; return True
@@ -102,7 +100,7 @@ buildClient chatrooms num hdl (ip,port) = do
      cmd <- hGetLine hdl
      case words cmd of
        ["KILL_SERVICE"]            -> return ()
-       ["HELO","BASE_TEST"]        -> do hPutStrLn hdl ("HELO BASE_TEST\nIP:"++ ip ++"\nPort:"++ port ++"\nStudentID: 14314836") >> loop
+       ["HELO","BASE_TEST"]        -> do hPutStrLn hdl ("HELO BASE_TEST\nIP:"++ ip ++"\nPort:"++ port ++"\nStudentID: 14314836") >> return ()
        ["JOIN_CHATROOM:",roomName] -> do
          cmds <- replicateM 3 $ hGetLine hdl
          case map words cmds of
@@ -123,7 +121,7 @@ getConns chatrooms sock num port = do
   hSetBuffering hdl NoBuffering
   sockName <- getSocketName sock
   (ip,_) <- getNameInfo [] True False sockName
-  forkFinally (buildClient chatrooms num hdl (fromJust ip, port)) (\_ -> do putStrLn ("Client["++ show num ++"] disconnected"))
+  forkFinally (buildClient chatrooms num hdl (fromJust ip, port)) (\_ -> do putStrLn ("Client["++ show num ++"] disconnected"); hClose hdl)
   getConns chatrooms sock (num + 1) port
 
 main :: IO ()
