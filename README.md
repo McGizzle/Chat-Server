@@ -1,6 +1,8 @@
 # Chat-Server
 
-A chat server written in Haskell.
+A simple TCP chat server written in Haskell. The server interacts with a specific set of protocols detailed below.
+
+## TODO: Explain protocols
 
 ## How to run it using stack
 
