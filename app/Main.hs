@@ -112,13 +112,14 @@ buildClient chatrooms num hdl (ip,port) = do
          where roomRef = hash roomName
        _                            -> hPutStrLn hdl "ERROR_CODE:100\nERROR_DESCRIPTION:Please join a chatroom before continuing." >> loop
 
-heloBase :: Handle -> String -> IO ()
+heloBase :: MVar -> Handle -> String -> IO ()
 heloBase hdl port = do
   msg <- hGetLine hdl
   case words msg of 
     ["HELO",t]       -> do
-      hPutStrLn hdl resp
-      where resp = "HELO "++ t ++"\nIP:134.226.44.50\nPort:"++ port ++"\nStudentID:14314836"
+      takeMvar wait
+      hPutStrLn hdl "HELO "++ t ++"\nIP:134.226.44.50\nPort:"++ port ++"\nStudentID:14314836"
+      putMVar wait
 
 getConns :: Chatrooms -> Socket -> Int -> String -> IO ()
 getConns chatrooms sock num port = do
@@ -143,6 +144,8 @@ main = do
   (conn,addr) <- accept sock
   hdl <- socketToHandle conn ReadWriteMode
   hSetBuffering hdl NoBuffering
-  heloBase hdl port >> getConns chatrooms sock 1 port
+  wait <- newEmptyMVar
+  heloBase wait hdl port 
+  getConns chatrooms sock 1 port
 
   return ()
