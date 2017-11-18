@@ -112,19 +112,13 @@ buildClient chatrooms num hdl (ip,port) = do
          where roomRef = hash roomName
        _                            -> hPutStrLn hdl "ERROR_CODE:100\nERROR_DESCRIPTION:Please join a chatroom before continuing." >> loop
 
-heloBase :: (Socket, SockAddr) -> String -> IO ()
-heloBase (conn, addr) port = do
-  loop
-  where
-   loop = do
-     msg <- recv conn 4096
-     case words msg of
-       ["HELO",t]       -> do
-         sendTo conn resp addr 
-         putStrLn resp >> loop
-         where resp = "HELO "++ t ++"\nIP:134.226.44.50\nPort:"++ port ++"\nStudentID:14314836"
-       ["KILL_SERVICE"] -> return ()
-       _                -> loop
+heloBase :: Handle -> String -> IO ()
+heloBase hdl port = do
+  msg <- hGetLine hdl
+  case words msg of 
+    ["HELO",t]       -> do
+      hPutStrLn hdl resp
+      where resp = "HELO "++ t ++"\nIP:134.226.44.50\nPort:"++ port ++"\nStudentID:14314836"
 
 getConns :: Chatrooms -> Socket -> Int -> String -> IO ()
 getConns chatrooms sock num port = do
@@ -147,6 +141,8 @@ main = do
   chatrooms <- atomically $ newTVar Map.empty
   putStrLn ("Server started... Listening on port: "++ port)
   (conn,addr) <- accept sock
-  forkFinally (heloBase (conn,addr) port) (\_ -> do putStrLn "Killing..."; close conn; close sock; return () )
-  getConns chatrooms sock 1 port
+  hdl <- socketToHandle conn ReadWriteMode
+  hSetBuffering hdl NoBuffering
+  heloBase hdl port >> getConns chatrooms sock 1 port
+
   return ()
